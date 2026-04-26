@@ -2,7 +2,7 @@ import streamlit as st
 import random
 
 # --- CONFIGURACIÓ DE PÀGINA ---
-st.set_page_config(page_title="P - Primitiva Pro v16", page_icon="P")
+st.set_page_config(page_title="P - Primitiva Pro v17", page_icon="P")
 
 st.markdown("""
     <style>
@@ -10,9 +10,11 @@ st.markdown("""
     .card { padding: 12px; border: 2px solid black; margin-bottom: 10px; background-color: #fff; text-align: center; }
     .num { display: inline-block; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; border: 2px solid black; margin: 2px; font-weight: bold; font-size: 13px; text-align: center; color: black; }
     .r-num { background-color: black; color: white; }
-    .diag-box { margin-top: 8px; padding: 5px; background: #f4f4f4; border-radius: 3px; font-size: 11px; font-weight: bold; color: #d32f2f; }
+    .diag-box { margin-top: 8px; padding: 8px; background: #f8f9fa; border-radius: 3px; font-size: 11px; text-align: left; line-height: 1.5; color: #333; }
     .bote-box { background-color: #000; color: gold; padding: 20px; text-align: center; font-size: 26px; font-weight: 900; border: 4px solid gold; margin-bottom: 20px; }
     .stButton>button { background-color: black !important; color: white !important; width: 100%; height: 60px; font-weight: bold; font-size: 20px; border: 2px solid gold !important; }
+    .ok { color: green; font-weight: bold; }
+    .no { color: red; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -24,59 +26,63 @@ sorteigs_reals = [
 ]
 
 gemelos_list = [11, 22, 33, 44]
-cal_hist = [38, 39, 47, 3, 45, 30, 42, 11, 22, 7]
+cal_hist = [3, 38, 39, 47, 45, 23, 1, 30, 10, 15]
 n_tots = list(range(1, 50))
 desp_hist = [x for x in n_tots if x not in cal_hist][:20]
 hielo_hist = [x for x in n_tots if x not in cal_hist and x not in desp_hist]
 
-def analitzar_puntos(c, f_dec, f_suma, f_ab, f_ps, f_gem, f_cons, f_term, is_7=False):
-    puntos = 0
-    # 1. Decenes 2-2-1-1-1 (o 2-1-1-1-1 per 6 nums)
+def diagnostic_detallat(c):
+    is_7 = len(c) == 7
+    checks = []
+    
+    # 1. Decenes
     decs = [(x-1)//10 for x in c]
     counts = sorted([decs.count(i) for i in range(5)], reverse=True)
-    target = [2, 2, 1, 1, 1] if len(c) == 7 else [2, 1, 1, 1, 1]
-    if counts == target: puntos += 1
+    target = [2, 2, 1, 1, 1] if is_7 else [2, 1, 1, 1, 1]
+    checks.append(f"{'✅' if counts == target else '❌'} Decenes ({'-'.join(map(str, sorted([decs.count(i) for i in range(5)], reverse=True)))})")
     
     # 2. Suma
-    s_total = sum(c)
-    lim_inf, lim_sup = (150, 220) if len(c) == 7 else (131, 160)
-    if lim_inf <= s_total <= lim_sup: puntos += 1
+    s_tot = sum(c)
+    l_inf, l_sup = (150, 220) if is_7 else (131, 160)
+    checks.append(f"{'✅' if l_inf <= s_tot <= l_sup else '❌'} Suma ({s_tot})")
     
-    # 3. Alts/Baixos (Equilibri)
-    bajos = [x for x in c if x <= 25]
-    if len(bajos) in [3, 4]: puntos += 1
+    # 3. Alts/Baixos
+    bajos = len([x for x in c if x <= 25])
+    checks.append(f"{'✅' if bajos in [3,4] else '❌'} Alts/Baixos ({bajos}B/{len(c)-bajos}A)")
     
-    # 4. Parells/Senars (Equilibri)
+    # 4. Parells/Senars
     pares = len([x for x in c if x % 2 == 0])
-    if pares in [3, 4]: puntos += 1
+    checks.append(f"{'✅' if pares in [3,4] else '❌'} Parells/Senars ({pares}P/{len(c)-pares}S)")
     
     # 5. Bessons
     gc = len([x for x in c if x in gemelos_list])
-    if gc == 1: puntos += 1
+    checks.append(f"{'✅' if gc == 1 else '❌'} Bessons ({gc})")
     
     # 6. Consecutius
     sc = sorted(c)
     cc = sum(1 for i in range(len(sc)-1) if sc[i+1]-sc[i] == 1)
-    if cc == 1: puntos += 1
+    checks.append(f"{'✅' if cc == 1 else '❌'} Consecutius ({cc})")
     
-    # 7. Terminacions (Màx 2)
+    # 7. Terminacions
     terms = [x % 10 for x in c]
-    if all(terms.count(i) <= 2 for i in range(10)): puntos += 1
+    checks.append(f"{'✅' if all(terms.count(i) <= 2 for i in range(10)) else '❌'} Terminacions (Màx 2)")
     
-    return puntos
+    return checks
 
 # --- UI: EL BOTE ---
 st.markdown('<div class="bote-box">PROPER SORTEIG BOTE:<br>9.500.000 €</div>', unsafe_allow_html=True)
 
 # --- UI: ANÀLISI HISTÒRIC ---
-st.subheader("Anàlisi Històric (6 números)")
+st.subheader("Anàlisi Històric Detallat")
 for s in sorteigs_reals:
-    pts = analitzar_puntos(s['nums'], True, True, True, True, True, True, True)
+    checks = diagnostic_detallat(s['nums'])
     n_html = "".join([f'<div class="num">{x}</div>' for x in s['nums']])
     st.markdown(f"""
         <div class="card">
             <strong>📅 {s['data']}</strong><br>{n_html} <div class="num r-num">{s['r']}</div>
-            <div class="diag-box">Aquesta combinació respecta {pts} de 7 paràmetres analitzats</div>
+            <div class="diag-box">
+                {"<br>".join(checks)}
+            </div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -101,7 +107,6 @@ if st.button("GENERAR 6 APOSTES MÚLTIPLES (7 NÚMEROS)"):
         idx = len(finales)
         t_ab = "4B3A" if idx % 2 == 0 else "3B4A"
         t_ps = "4P3S" if idx % 2 == 0 else "3P4S"
-        
         u_gem = gem_on if idx < 3 else False
         u_cons = cons_on if idx in [0, 2, 4] else False
         
@@ -109,12 +114,11 @@ if st.button("GENERAR 6 APOSTES MÚLTIPLES (7 NÚMEROS)"):
         c = sorted(list(set(c)))
         
         if len(c) == 7:
-            # Validació interna segons els toggles
             decs = [(x-1)//10 for x in c]
-            cond_dec = (sorted([decs.count(i) for i in range(5)], reverse=True) == [2, 2, 1, 1, 1]) if f_dec else True
+            cond_dec = (sorted([decs.count(i) for i in range(5)], reverse=True) == [2,2,1,1,1]) if f_dec else True
             cond_sum = (150 <= sum(c) <= 220) if f_suma else True
-            bajos = [x for x in c if x <= 25]
-            cond_ab = (len(bajos) == (4 if t_ab == "4B3A" else 3)) if f_ab else True
+            bajos = len([x for x in c if x <= 25])
+            cond_ab = (bajos == (4 if t_ab == "4B3A" else 3)) if f_ab else True
             pares = len([x for x in c if x % 2 == 0])
             cond_ps = (pares == (4 if t_ps == "4P3S" else 3)) if f_ps else True
             gc = len([x for x in c if x in gemelos_list])
@@ -132,6 +136,7 @@ if st.button("GENERAR 6 APOSTES MÚLTIPLES (7 NÚMEROS)"):
     if len(finales) < 6:
         st.warning("Filtres massa estrictes. Prova de nou.")
     else:
+        st.subheader("Les teves Apostes de 7 Números")
         for i, combo in enumerate(finales):
             n_html = "".join([f'<div class="num">{x}</div>' for x in combo])
-            st.markdown(f'<div class="card">{n_html}<div class="num r-num">{rs_top[i]}</div><br><small>Aposta {i+1} (7 números)</small></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="card">{n_html}<div class="num r-num">{rs_top[i]}</div><br><small>Aposta {i+1}</small></div>', unsafe_allow_html=True)
