@@ -79,7 +79,7 @@ def validar_final(combo, anteriores, con_gem, con_cons, tipo):
     return True
 
 # --- INTERFÍCIE ---
-st.title("PRIMITIVA")
+st.title("PRIMITIVA v1")
 st.write(f"Sorteig: {datetime.now().strftime('%d/%m/%Y')} | 08-14-23-35-42-49 R: 9")
 
 # SELECTORS ON/OFF (Amb text forçat en negre i negreta)
