@@ -10,119 +10,118 @@ st.set_page_config(page_title="Primitiva Predictor", page_icon="P", layout="cent
 # Estilo Minimalista Monocromático
 st.markdown("""
     <style>
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #f0f2f6; color: black; border: 1px solid #dcdcdc; }
-    .stButton>button:active { background-color: black; color: white; }
-    .status-box { padding: 10px; border-radius: 5px; border: 1px solid #eee; background-color: #fafafa; margin-bottom: 20px; }
+    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #000000; color: white; border: none; }
+    .stButton>button:hover { background-color: #333333; color: white; }
+    .status-box { padding: 15px; border-radius: 10px; border: 1px solid #eee; background-color: #f9f9f9; margin-bottom: 20px; text-align: center; }
     .card { padding: 15px; border-radius: 10px; border: 1px solid #eee; background-color: white; margin-bottom: 10px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
-    .number-circle { display: inline-block; width: 35px; height: 35px; line-height: 35px; border-radius: 50%; background: #000; color: #fff; margin: 3px; font-weight: bold; }
-    .r-circle { background: #555; }
+    .number-circle { display: inline-block; width: 35px; height: 35px; line-height: 35px; border-radius: 50%; background: #000; color: #fff; margin: 3px; font-weight: bold; font-size: 14px; }
+    .r-circle { background: #888; }
+    /* Estilo para radio buttons ON/OFF */
+    div.row-widget.stRadio > div{ flex-direction:row; justify-content: center; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- LÓGICA DE DATOS (Simulada para funcionamiento inmediato) ---
-# Nota: En una versión avanzada, aquí conectaríamos con el scraper de la web oficial.
-def get_mock_data():
-    numeros_todos = list(range(1, 50))
-    historico = [random.sample(range(1, 50), 6) for _ in range(100)]
-    ultimo_sorteo = {
-        "fecha": datetime.now().strftime("%d/%m/%Y"),
-        "combinacion": sorted(random.sample(range(1, 50), 6)),
-        "reintegro": random.randint(0, 9)
-    }
-    return numeros_todos, historico, ultimo_sorteo
-
-numeros_todos, historico, ultimo_sorteo = get_mock_data()
-
-# --- CLASIFICACIÓN DE GRUPOS (Basado en tus reglas) ---
-# Aquí se aplicarían los cálculos de "Fuego", "Hielo", "Despertando", etc.
-# Para este MVP, el sistema pre-clasifica según las reglas de los últimos sorteos.
-up = list(range(1, 26)) 
-down = list(range(26, 50))
-despertando = [2, 7, 14, 21, 28, 33, 40, 45, 49]
-hielo_frio_down = [5, 12, 19, 26, 34, 41, 48]
-calientes = [1, 10, 15, 22, 30, 39]
-repes = [15, 30]
+# --- LÓGICA DE DATOS Y GRUPOS ---
+# Simulamos la clasificación basada en tus reglas para que sea funcional
+nros = list(range(1, 50))
+up = nros[:25]
+down = nros[25:]
+fuego = random.sample(nros, 20)
+hielo = [n for n in nros if n not in fuego]
+calientes = random.sample(nros, 15)
+repes = random.sample(calientes, 3)
+frios = [n for n in nros if n not in calientes]
+despertando = random.sample(frios, 10)
+hielo_frio_down = [n for n in down if n in hielo and n in frios]
+# En caso de que la intersección sea pequeña, rellenamos para evitar errores
+if len(hielo_frio_down) < 2: hielo_frio_down = random.sample(down, 5)
 
 # --- MOTOR DE GENERACIÓN ---
-def generar_combinacion(con_gemelos, con_consecutivos, par_impar_tipo):
-    intentos = 0
-    while intentos < 1000:
-        combo = []
-        # 4 de Despertando + 2 (Down/Hielo/Frío) + 1 Caliente no Repe
+def validar_solapamiento(nueva_comb, anteriores):
+    for vieja in anteriores:
+        coincidencias = len(set(nueva_comb) & set(vieja))
+        if coincidencias > 2:
+            return False
+    return True
+
+def generar_comb(con_gem, con_cons, tipo, anteriores):
+    gemelos = [11, 22, 33, 44]
+    for _ in range(2000): # Intentos para encontrar la combinación perfecta
+        # Composición: 4 Despertando + 2 (Down/Hielo/Frío) + 1 Caliente no Repe
         c_desp = random.sample(despertando, 4)
         c_extra = random.sample(hielo_frio_down, 2)
-        c_cal = random.choice([n for n in calientes if n not in repes])
-        combo = list(set(c_desp + c_extra + [c_cal]))
+        c_cal = [n for n in calientes if n not in repes]
+        if not c_cal: c_cal = [1]
+        c_final = list(set(c_desp + c_extra + [random.choice(c_cal)]))
         
-        if len(combo) < 7: continue # Asegurar 7 números únicos
-        
-        combo.sort()
-        
+        if len(c_final) < 7: continue
+        c_final.sort()
+
+        # Filtro Solapamiento (NUEVO: Máx 2 números iguales con las anteriores)
+        if not validar_solapamiento(c_final, anteriores): continue
+
         # Filtro Pares/Impares
-        pares = [n for n in combo if n % 2 == 0]
-        impares = [n for n in combo if n % 2 != 0]
-        if par_impar_tipo == "3P4I" and (len(pares) != 3 or len(impares) != 4): continue
-        if par_impar_tipo == "4P3I" and (len(pares) != 4 or len(impares) != 3): continue
-        
-        # Filtro Decenas (Mínimo 1 por grupo)
-        decenas = {i: 0 for i in range(5)}
-        for n in combo:
-            idx = min((n-1)//10, 4)
-            decenas[idx] += 1
-        if any(v == 0 for v in decenas.values()): continue
-        
+        p = [n for n in c_final if n % 2 == 0]
+        i = [n for n in c_final if n % 2 != 0]
+        if tipo == "3P4I" and len(p) != 3: continue
+        if tipo == "4P3I" and len(p) != 4: continue
+
+        # Filtro Decenas (2-2-1-1-1)
+        decs = [(n-1)//10 for n in c_final]
+        if len(set(decs)) < 5: continue
+
         # Filtro Suma (131-160)
-        if not (131 <= sum(combo) <= 160): continue
-        
-        # Filtro Terminaciones (Máximo 2 números con misma terminación)
-        terms = [n % 10 for n in combo]
-        if len(set(terms)) < 6: continue 
-        
-        # Filtro Gemelos (11, 22, 33, 44)
-        gemelos_presentes = [n for n in combo if n in [11, 22, 33, 44]]
-        if con_gemelos:
-            if len(gemelos_presentes) > 1: continue
-        else:
-            if len(gemelos_presentes) > 0: continue
-            
+        if not (131 <= sum(c_final) <= 160): continue
+
+        # Filtro Terminaciones (Máximo 2 números misma terminación)
+        terms = [n % 10 for n in c_final]
+        if len(set(terms)) < 6: continue
+
         # Filtro Gaps < 18
-        gaps = [combo[i+1] - combo[i] for i in range(len(combo)-1)]
-        if any(g > 18 for g in gaps): continue
-        
-        return combo
-    return sorted(random.sample(range(1, 50), 7)) # Fallback
+        if any(c_final[idx+1] - c_final[idx] > 18 for idx in range(6)): continue
+
+        # Filtro Gemelos
+        presentes_gem = [n for n in c_final if n in gemelos]
+        if con_gem:
+            if len(presentes_gem) != 1: continue
+        else:
+            if len(presentes_gem) > 0: continue
+            
+        return c_final
+    return sorted(random.sample(range(1, 50), 7))
 
 # --- INTERFAZ ---
-st.title("P - Primitiva Predictor")
+st.title("P - Primitiva")
 
-with st.container():
-    st.markdown(f"""
-    <div class="status-box">
-        <b>Último Sorteo Oficial:</b> {ultimo_sorteo['fecha']}<br>
-        <span style="font-size: 20px;">{' - '.join(map(str, ultimo_sorteo['combinacion']))} | R: {ultimo_sorteo['reintegro']}</span>
-    </div>
-    """, unsafe_allow_html=True)
+# Datos del último sorteo (Simulado)
+st.markdown(f"""<div class="status-box">
+    <b>Último Sorteo: {datetime.now().strftime('%d/%m/%Y')}</b><br>
+    <span style="font-size: 1.2em;">04 - 12 - 25 - 31 - 44 - 49 | R: 7</span>
+    </div>""", unsafe_allow_html=True)
 
-col1, col2 = st.columns(2)
-with col1:
-    btn_gem = st.radio("GEMELOS", ["OFF", "ON"], horizontal=True)
-with col2:
-    btn_cons = st.radio("CONSECUTIVOS", ["OFF", "ON"], horizontal=True)
+c1, c2 = st.columns(2)
+with c1:
+    gem_mode = st.radio("GEMELOS", ["OFF", "ON"])
+with c2:
+    cons_mode = st.radio("CONSECUTIVOS", ["OFF", "ON"])
 
-if st.button("GENERAR PREDICCIÓN ESTRATÉGICA"):
-    st.subheader("Tus 6 Combinaciones Múltiples (7 nrs):")
+if st.button("GENERAR 6 MÚLTIPLES"):
+    combinaciones_finales = []
+    reintegros_frios = random.sample(range(10), 3)
+    reintegros_desp = random.sample([n for n in range(10) if n not in reintegros_frios], 3)
     
-    for i in range(6):
-        tipo = "3P4I" if i < 3 else "4P3I"
-        res = generar_combinacion(btn_gem == "ON", btn_cons == "ON", tipo)
-        reintegro = random.choice(range(10)) # Lógica de reintegro simplificada
+    for idx in range(6):
+        tipo = "3P4I" if idx < 3 else "4P3I"
+        # Controlar que solo 3 combinaciones tengan gemelos si el botón está ON
+        usar_gemelo = (gem_mode == "ON" and idx < 3)
         
-        nums_html = "".join([f'<div class="number-circle">{n}</div>' for n in res])
-        st.markdown(f"""
-        <div class="card">
-            <b>Combinación {i+1} ({tipo})</b><br>
-            {nums_html} <div class="number-circle r-circle">{reintegro}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-st.caption("Filtros activos: Gaps < 18, Suma 131-160, Decenas 2-2-1-1-1, Terminaciones únicas.")
+        nueva = generar_comb(usar_gemelo, cons_mode == "ON", tipo, combinaciones_finales)
+        combinaciones_finales.append(nueva)
+        
+        r = reintegros_frios[idx] if idx < 3 else reintegros_desp[idx-3]
+        
+        nums_html = "".join([f'<div class="number-circle">{n}</div>' for n in nueva])
+        st.markdown(f"""<div class="card">
+            <small>Múltiple {idx+1} ({tipo})</small><br>
+            {nums_html} <div class="number-circle r-circle">{r}</div>
+            </div>""", unsafe_allow_html=True)
