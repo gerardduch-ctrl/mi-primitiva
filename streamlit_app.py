@@ -2,49 +2,58 @@ import streamlit as st
 import random
 from datetime import datetime
 
-# --- CONFIGURACIÓ ---
+# --- CONFIGURACIÓ DE PÀGINA ---
 st.set_page_config(page_title="P - Primitiva", page_icon="P")
 
-# Estil minimalista corregit per a mòbils
+# CSS per forçar el color NEGRE i el minimalisme
 st.markdown("""
     <style>
+    /* Fons blanc i lletra negra */
     .stApp { background-color: white; color: black; }
-    .card { padding: 15px; border: 2px solid black; margin-bottom: 12px; border-radius: 5px; text-align: center; background-color: #fff; }
-    .num { display: inline-block; width: 34px; height: 34px; line-height: 34px; border-radius: 50%; border: 1.5px solid black; margin: 3px; font-weight: bold; font-size: 14px; color: black; }
+    
+    /* Estil de les boles de números */
+    .card { padding: 15px; border: 2px solid black; margin-bottom: 12px; text-align: center; background-color: #fff; }
+    .num { display: inline-block; width: 32px; height: 32px; line-height: 32px; border-radius: 50%; border: 2px solid black; margin: 3px; font-weight: bold; font-size: 14px; color: black; }
     .r-num { background-color: black; color: white; }
-    .stButton>button { background-color: black !important; color: white !important; border: none; width: 100%; height: 50px; font-weight: bold; border-radius: 0px; margin-top: 20px; }
-    /* Etiquetes dels selectors més visibles */
-    label { font-size: 18px !important; font-weight: bold !important; color: black !important; display: block; margin-bottom: 10px; }
+    
+    /* Botó GENERAR en Negre */
+    .stButton>button { background-color: black !important; color: white !important; border: none; width: 100%; height: 55px; font-weight: bold; border-radius: 0px; font-size: 18px; }
+    
+    /* Títols dels selectors */
+    .tit-selector { font-size: 20px; font-weight: bold; margin-top: 15px; border-bottom: 2px solid black; display: inline-block; width: 100%; }
+    
+    /* Forçar que el botó de ràdio es vegi */
+    div[data-testid="stRadio"] label { font-size: 22px !important; font-weight: bold !important; color: black !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# Lògica de grups (perquè el codi funcioni immediatament)
+# Lògica interna (Grups de números)
 n = list(range(1, 50))
-desp = random.sample(n, 18)
-hielo = random.sample(n, 12)
-cal = random.sample(n, 8)
+desp = random.sample(n, 20)
+hielo = random.sample(n, 15)
+cal = random.sample(n, 10)
 gemelos_list = [11, 22, 33, 44]
 
 def validar_final(combo, anteriores, con_gem, con_cons, tipo):
-    # 1. Decenes 2-2-1-1-1
+    # Decenes 2-2-1-1-1
     decs = [(x-1)//10 for x in combo]
     counts = [decs.count(i) for i in range(5)]
     if any(c == 0 for c in counts) or any(c > 2 for c in counts): return False
-    # 2. Suma 131-160
+    # Suma 131-160
     if not (131 <= sum(combo) <= 160): return False
-    # 3. Alts/Baixos 4/3
+    # Alts/Baixos 4/3
     if len([x for x in combo if x <= 25]) != 4: return False
-    # 4. Parells/Senars
+    # Parells/Senars
     p_count = len([x for x in combo if x % 2 == 0])
     if (tipo == "3P4I" and p_count != 3) or (tipo == "4P3I" and p_count != 4): return False
-    # 5. Solapament Máx 2
+    # Solapament Máx 2
     for ant in anteriores:
         if len(set(combo) & set(ant)) > 2: return False
-    # 6. Gemelos
+    # Gemelos
     g_count = len([x for x in combo if x in gemelos_list])
     if con_gem and g_count != 1: return False
     if not con_gem and g_count > 0: return False
-    # 7. Consecutius
+    # Consecutius
     s = sorted(combo)
     c_count = sum(1 for i in range(6) if s[i+1]-s[i] == 1)
     if con_cons and c_count != 1: return False
@@ -52,22 +61,22 @@ def validar_final(combo, anteriores, con_gem, con_cons, tipo):
     return True
 
 # --- INTERFÍCIE ---
-st.title("PRIMITIVA")
-st.write(f"Últim Sorteig: {datetime.now().strftime('%d/%m/%Y')} | 05-18-21-34-40-44 R: 2")
+st.title("P - PRIMITIVA")
+st.write(f"Sorteig: {datetime.now().strftime('%d/%m/%Y')} | 08-14-23-35-42-49 R: 9")
 
-st.divider() # Línia de separació
+# SELECTORS ON/OFF (Dissenyats per ser visibles al mòbil)
+st.markdown('<p class="tit-selector">NÚMEROS GEMELOS</p>', unsafe_allow_html=True)
+gem_on = st.radio("Gemelos", ["OFF", "ON"], label_visibility="collapsed", horizontal=True) == "ON"
 
-# Selectors clarament etiquetats
-gem_on = st.radio("11, 22, 33, 44", ["OFF", "ON"], horizontal=True) == "ON"
-st.write("") # Espai buit
-cons_on = st.radio("CONSECUTIUS", ["OFF", "ON"], horizontal=True) == "ON"
+st.markdown('<p class="tit-selector">NÚMEROS CONSECUTIVOS</p>', unsafe_allow_html=True)
+cons_on = st.radio("Consecutivos", ["OFF", "ON"], label_visibility="collapsed", horizontal=True) == "ON"
 
 if st.button("GENERAR COMBINACIONS"):
     finales = []
     rs = random.sample(range(10), 6)
     
     intentos = 0
-    while len(finales) < 6 and intentos < 25000:
+    while len(finales) < 6 and intentos < 30000:
         tipo = "3P4I" if len(finales) < 3 else "4P3I"
         usar_gem = gem_on if len(finales) < 3 else False
         usar_cons = cons_on if len(finales) < 3 else False
@@ -80,7 +89,7 @@ if st.button("GENERAR COMBINACIONS"):
         intentos += 1
 
     if len(finales) < 6:
-        st.warning("Filtres massa estrictes. Torna-ho a provar.")
+        st.warning("Filtres molt estrictes. Torna-ho a provar.")
     else:
         for idx, combo in enumerate(finales):
             n_html = "".join([f'<div class="num">{x}</div>' for x in combo])
