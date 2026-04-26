@@ -52,7 +52,7 @@ def validar_final(combo, anteriores, con_gem, con_cons, tipo):
     return True
 
 # --- INTERFÍCIE ---
-st.title("P - PRIMITIVA")
+st.title("PRIMITIVA")
 st.write(f"Últim Sorteig: {datetime.now().strftime('%d/%m/%Y')} | 05-18-21-34-40-44 R: 2")
 
 st.divider() # Línia de separació
@@ -62,7 +62,7 @@ gem_on = st.radio("11, 22, 33, 44", ["OFF", "ON"], horizontal=True) == "ON"
 st.write("") # Espai buit
 cons_on = st.radio("CONSECUTIUS", ["OFF", "ON"], horizontal=True) == "ON"
 
-if st.button("GENERAR COMBINACIONES"):
+if st.button("GENERAR COMBINACIONS"):
     finales = []
     rs = random.sample(range(10), 6)
     
