@@ -60,7 +60,7 @@ def diagnostic_detallat(c):
 st.markdown('<div class="bote-box">PROPER SORTEIG BOTE:<br>9.500.000 €</div>', unsafe_allow_html=True)
 
 # --- UI: ANÀLISI HISTÒRIC ---
-st.subheader("Resultats")
+st.subheader("Primitiva V.3")
 for s in sorteigs_reals:
     checks = diagnostic_detallat(s['nums'])
     n_html = "".join([f'<div class="num">{x}</div>' for x in s['nums']])
