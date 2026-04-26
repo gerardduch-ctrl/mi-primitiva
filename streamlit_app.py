@@ -58,9 +58,9 @@ st.write(f"Últim Sorteig: {datetime.now().strftime('%d/%m/%Y')} | 05-18-21-34-4
 st.divider() # Línia de separació
 
 # Selectors clarament etiquetats
-gem_on = st.radio("BOTÓ GEMELOS (11, 22, 33, 44)", ["OFF", "ON"], horizontal=True) == "ON"
+gem_on = st.radio("11, 22, 33, 44", ["OFF", "ON"], horizontal=True) == "ON"
 st.write("") # Espai buit
-cons_on = st.radio("BOTÓ CONSECUTIVOS", ["OFF", "ON"], horizontal=True) == "ON"
+cons_on = st.radio("CONSECUTIUS", ["OFF", "ON"], horizontal=True) == "ON"
 
 if st.button("GENERAR COMBINACIONES"):
     finales = []
