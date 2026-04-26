@@ -79,14 +79,14 @@ def validar_final(combo, anteriores, con_gem, con_cons, tipo):
     return True
 
 # --- INTERFÍCIE ---
-st.title("P - PRIMITIVA")
+st.title("PRIMITIVA")
 st.write(f"Sorteig: {datetime.now().strftime('%d/%m/%Y')} | 08-14-23-35-42-49 R: 9")
 
 # SELECTORS ON/OFF (Amb text forçat en negre i negreta)
-st.markdown('<p class="tit-selector">NÚMEROS GEMELOS</p>', unsafe_allow_html=True)
+st.markdown('<p class="tit-selector">NÚMEROS BESSONS</p>', unsafe_allow_html=True)
 gem_on = st.radio("Gemelos", ["OFF", "ON"], label_visibility="collapsed", horizontal=True) == "ON"
 
-st.markdown('<p class="tit-selector">NÚMEROS CONSECUTIVOS</p>', unsafe_allow_html=True)
+st.markdown('<p class="tit-selector">NÚMEROS CONSECUTIUS</p>', unsafe_allow_html=True)
 cons_on = st.radio("Consecutivos", ["OFF", "ON"], label_visibility="collapsed", horizontal=True) == "ON"
 
 if st.button("GENERAR COMBINACIONS"):
